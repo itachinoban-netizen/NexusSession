@@ -20,7 +20,7 @@ import configparser
 import sqlite3
 import logging
 from datetime import datetime
-from aiohttp import web
+from aiohttp import web  # входит в aiogram как зависимость
 
 try:
     from aiogram import Bot, Dispatcher, executor, types
