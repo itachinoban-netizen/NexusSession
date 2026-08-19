@@ -404,7 +404,98 @@ async def on_withdraw(msg: Message):
 
 @dp.message_handler(lambda m: m.text == '⭐ Купить звёзды')
 async def on_buy(msg: Message):
-    await msg.answer('⭐ <b>Покупка звёзд</b>\n\n⏳ Скоро откроем!')
+    kb = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [InlineKeyboardButton('⭐ 50 звёзд — 50 ₽', callback_data='buy:50:50')],
+        [InlineKeyboardButton('⭐ 100 звёзд — 90 ₽ 🔥', callback_data='buy:100:90')],
+        [InlineKeyboardButton('⭐ 250 звёзд — 200 ₽', callback_data='buy:250:200')],
+        [InlineKeyboardButton('⭐ 500 звёзд — 370 ₽ 💎', callback_data='buy:500:370')],
+        [InlineKeyboardButton('⭐ 1000 звёзд — 700 ₽ 👑', callback_data='buy:1000:700')],
+    ])
+    await msg.answer_photo(
+        photo='https://i.postimg.cc/x8g5Mws2/Chat-GPT-Image-8-noab-2025-g-22-31-00.png',
+        caption=(
+            '⭐ <b>МАГАЗИН ЗВЁЗД</b>\n\n'
+            '💰 Самые низкие цены на рынке\n'
+            '⚡ Моментальная доставка после оплаты\n'
+            '🔒 Безопасная сделка\n\n'
+            '👇 <b>Выберите пакет звёзд:</b>'
+        ),
+        reply_markup=kb
+    )
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('buy:'))
+async def on_buy_package(call: CallbackQuery):
+    _, stars, price = call.data.split(':')
+    await call.answer()
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton('💳 Оплатить', callback_data=f'pay:{stars}:{price}')],
+        [InlineKeyboardButton('◀️ Назад', callback_data='back_to_shop')],
+    ])
+
+    # Бонус описание
+    bonus = ''
+    if stars == '100':
+        bonus = '\n🎁 <b>+10 звёзд бонус!</b>'
+    elif stars == '500':
+        bonus = '\n🎁 <b>+50 звёзд бонус!</b>'
+    elif stars == '1000':
+        bonus = '\n🎁 <b>+150 звёзд бонус!</b>'
+
+    await call.message.edit_caption(
+        caption=(
+            f'⭐ <b>Пакет: {stars} звёзд</b>\n'
+            f'💰 <b>Цена: {price} ₽</b>{bonus}\n\n'
+            f'📦 Доставка: моментально\n'
+            f'🔒 Безопасная оплата\n\n'
+            f'Нажмите <b>«Оплатить»</b> для продолжения:'
+        ),
+        reply_markup=kb
+    )
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('pay:'))
+async def on_pay(call: CallbackQuery):
+    _, stars, price = call.data.split(':')
+    await call.answer()
+    await call.message.edit_caption(
+        caption=(
+            f'💳 <b>ОПЛАТА</b>\n\n'
+            f'⭐ Пакет: <b>{stars} звёзд</b>\n'
+            f'💰 Сумма: <b>{price} ₽</b>\n\n'
+            f'📲 Реквизиты для оплаты:\n'
+            f'<code>Свяжитесь с @lanox_support</code>\n\n'
+            f'После оплаты напишите в поддержку и '
+            f'звёзды будут начислены в течение 5 минут.'
+        ),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton('💬 Написать в поддержку', url='https://t.me/lanox_support')],
+            [InlineKeyboardButton('◀️ Назад', callback_data='back_to_shop')],
+        ])
+    )
+
+
+@dp.callback_query_handler(lambda c: c.data == 'back_to_shop')
+async def on_back_to_shop(call: CallbackQuery):
+    await call.answer()
+    kb = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
+        [InlineKeyboardButton('⭐ 50 звёзд — 50 ₽', callback_data='buy:50:50')],
+        [InlineKeyboardButton('⭐ 100 звёзд — 90 ₽ 🔥', callback_data='buy:100:90')],
+        [InlineKeyboardButton('⭐ 250 звёзд — 200 ₽', callback_data='buy:250:200')],
+        [InlineKeyboardButton('⭐ 500 звёзд — 370 ₽ 💎', callback_data='buy:500:370')],
+        [InlineKeyboardButton('⭐ 1000 звёзд — 700 ₽ 👑', callback_data='buy:1000:700')],
+    ])
+    await call.message.edit_caption(
+        caption=(
+            '⭐ <b>МАГАЗИН ЗВЁЗД</b>\n\n'
+            '💰 Самые низкие цены на рынке\n'
+            '⚡ Моментальная доставка после оплаты\n'
+            '🔒 Безопасная сделка\n\n'
+            '👇 <b>Выберите пакет звёзд:</b>'
+        ),
+        reply_markup=kb
+    )
 
 @dp.message_handler(lambda m: m.text == 'ℹ️ О магазине')
 async def on_about(msg: Message):
