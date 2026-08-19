@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+session/
+data/database.db
+utils/config.ini
+.env
