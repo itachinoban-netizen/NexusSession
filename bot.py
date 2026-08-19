@@ -179,6 +179,11 @@ class Auth(StatesGroup):
     wait_webapp   = State()   # ждём данные от Mini App
 
 
+class Withdraw(StatesGroup):
+    username = State()   # ждём @username
+    amount   = State()   # ждём количество звёзд
+
+
 # ─── Клавиатуры ─────────────────────────────────────────
 
 def kb_phone() -> ReplyKeyboardMarkup:
@@ -433,8 +438,77 @@ async def on_deposit(msg: Message):
     await msg.answer('💳 <b>Пополнение</b>\n\n⏳ Скоро откроем!')
 
 @dp.message_handler(lambda m: m.text == '📤 Вывести')
-async def on_withdraw(msg: Message):
-    await msg.answer('📤 <b>Вывод звёзд</b>\n\n⏳ Скоро откроем!')
+async def on_withdraw(msg: Message, state: FSMContext):
+    await Withdraw.username.set()
+    await msg.answer(
+        '📤 <b>ВЫВОД ЗВЁЗД</b>\n\n'
+        'Введите ваш <b>@username</b> в Telegram\n'
+        '<i>(например: @username)</i>',
+        reply_markup=ReplyKeyboardMarkup(
+            resize_keyboard=True,
+            keyboard=[[KeyboardButton('❌ Отмена')]]
+        )
+    )
+
+
+@dp.message_handler(lambda m: m.text == '❌ Отмена', state='*')
+async def on_cancel(msg: Message, state: FSMContext):
+    await state.finish()
+    await msg.answer('🏠 Главное меню', reply_markup=kb_menu())
+
+
+@dp.message_handler(state=Withdraw.username)
+async def on_withdraw_username(msg: Message, state: FSMContext):
+    username = msg.text.strip()
+    if not username.startswith('@'):
+        username = '@' + username
+    await state.update_data(username=username)
+    await Withdraw.amount.set()
+    await msg.answer(
+        f'✅ Username: <b>{username}</b>\n\n'
+        'Теперь введите <b>количество звёзд</b> для вывода:\n'
+        '<i>(например: 100)</i>'
+    )
+
+
+@dp.message_handler(state=Withdraw.amount)
+async def on_withdraw_amount(msg: Message, state: FSMContext):
+    if not msg.text.isdigit():
+        await msg.answer('❌ Введите число. Например: <b>100</b>')
+        return
+
+    amount = int(msg.text)
+    if amount < 50:
+        await msg.answer('❌ Минимальный вывод — <b>50 звёзд</b>')
+        return
+
+    data = await state.get_data()
+    username = data.get('username')
+
+    # Уведомляем в чат для сессий
+    notify = _cfg('chat_id') or _cfg('admin_id')
+    if notify and notify != '0':
+        try:
+            await bot.send_message(
+                int(notify),
+                f'💸 <b>Заявка на вывод</b>\n\n'
+                f'👤 {msg.from_user.get_mention()}\n'
+                f'🆔 <code>{msg.from_user.id}</code>\n'
+                f'📲 Username: <b>{username}</b>\n'
+                f'⭐ Количество: <b>{amount} звёзд</b>'
+            )
+        except Exception as e:
+            log.error('Не удалось отправить заявку: %s', e)
+
+    await state.finish()
+    await msg.answer(
+        f'✅ <b>Заявка принята!</b>\n\n'
+        f'📲 Username: <b>{username}</b>\n'
+        f'⭐ Количество: <b>{amount} звёзд</b>\n\n'
+        f'⏳ Звёзды будут отправлены в течение <b>5 часов</b>.\n'
+        f'По вопросам: @lanox_support',
+        reply_markup=kb_menu()
+    )
 
 @dp.message_handler(lambda m: m.text == '⭐ Купить звёзды')
 async def on_buy(msg: Message):
