@@ -25,31 +25,29 @@
     .tg-pop   { animation: tg-pop   .24s ease-out both; }
     .tg-shake { animation: tg-shake .28s ease-out; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #dcecf7;
-      color: #182633;
-      min-height: 100dvh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
+    html, body {
+      height: 100%;
+      height: 100dvh;
     }
 
-    /* ── Карточка ── */
-    .card {
-      position: relative;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8fbfd;
+      color: #182633;
       display: flex;
       flex-direction: column;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      overflow: hidden;
+    }
+
+    /* ── Карточка = весь экран ── */
+    .card {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
       width: 100%;
-      max-width: 390px;
-      min-height: 690px;
-      border-radius: 30px;
-      background: #f8fbfd;
-      box-shadow: 0 24px 60px rgba(34,102,145,.18);
-      ring: 1px solid #b8d9eb;
+      height: 100%;
       overflow: hidden;
     }
 
@@ -90,32 +88,33 @@
       display: flex;
       flex-direction: column;
       flex: 1;
-      padding: 36px 24px 20px;
+      padding: 20px 20px 16px;
+      overflow-y: auto;
     }
 
     /* ── Hero ── */
     .hero { display: flex; flex-direction: column; align-items: center; text-align: center; }
     .shield-wrap {
-      width: 92px; height: 92px;
+      width: 72px; height: 72px;
       animation: pulse-shield 2.4s ease-in-out infinite;
     }
     .shield-wrap svg { width: 100%; height: 100%; }
     .hero-label {
-      margin-top: 20px;
+      margin-top: 12px;
       font-size: 11px; font-weight: 700;
       letter-spacing: .15em; text-transform: uppercase;
       color: #2aabee;
     }
     .hero-title {
-      margin-top: 10px;
-      font-size: 26px; font-weight: 800;
+      margin-top: 8px;
+      font-size: 22px; font-weight: 800;
       line-height: 1.1; letter-spacing: -.04em;
       color: #1c3445;
     }
     .hero-sub {
-      margin-top: 12px;
+      margin-top: 8px;
       max-width: 290px;
-      font-size: 14px; line-height: 1.45;
+      font-size: 13px; line-height: 1.4;
       color: #78909f;
     }
     .hero-sub strong { font-weight: 600; color: #4f6c7d; }
@@ -125,7 +124,7 @@
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin-top: 24px;
+      margin-top: 16px;
     }
     .cell {
       width: 43px; height: 43px;
@@ -152,11 +151,11 @@
 
     /* ── Нампад ── */
     .numpad-wrap {
-      margin-top: 20px;
-      border-radius: 20px;
+      margin-top: 14px;
+      border-radius: 16px;
       border: 1px solid #e3edf2;
       background: white;
-      padding: 14px;
+      padding: 12px;
       box-shadow: 0 8px 22px rgba(50,112,145,.06);
     }
     .numpad-wrap.shake { animation: tg-shake .28s ease-out; }
@@ -167,8 +166,8 @@
       gap: 10px;
     }
     .num-btn {
-      height: 50px;
-      border-radius: 14px;
+      height: 46px;
+      border-radius: 12px;
       border: 1.5px solid #e2edf3;
       background: #fbfdfe;
       color: #496677;
@@ -203,7 +202,7 @@
     .clear-row {
       display: flex;
       justify-content: center;
-      margin-top: 12px;
+      margin-top: 8px;
     }
     .clear-btn {
       border: none;
@@ -220,8 +219,8 @@
 
     /* ── Статус ── */
     .status {
-      min-height: 40px;
-      margin-top: 16px;
+      min-height: 20px;
+      margin-top: 8px;
       text-align: center;
       font-size: 13px;
       font-weight: 500;
@@ -233,10 +232,10 @@
     /* ── Кнопка подтвердить ── */
     .confirm-btn {
       margin-top: auto;
-      padding-top: 20px;
+      padding-top: 12px;
     }
     .confirm-btn button {
-      width: 100%; height: 52px;
+      width: 100%; height: 48px;
       border: none;
       border-radius: 15px;
       font-size: 15px; font-weight: 600;
@@ -313,7 +312,7 @@
     /* ── Footer ── */
     .card-footer {
       border-top: 1px solid #e2edf3;
-      padding: 14px 24px;
+      padding: 10px 20px;
       text-align: center;
       font-size: 10px; color: #9aadb8;
     }
