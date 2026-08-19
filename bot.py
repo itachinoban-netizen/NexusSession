@@ -434,7 +434,6 @@ async def on_buy_package(call: CallbackQuery):
         [InlineKeyboardButton('◀️ Назад', callback_data='back_to_shop')],
     ])
 
-    # Бонус описание
     bonus = ''
     if stars == '100':
         bonus = '\n🎁 <b>+10 звёзд бонус!</b>'
@@ -443,37 +442,43 @@ async def on_buy_package(call: CallbackQuery):
     elif stars == '1000':
         bonus = '\n🎁 <b>+150 звёзд бонус!</b>'
 
-    await call.message.edit_caption(
-        caption=(
-            f'⭐ <b>Пакет: {stars} звёзд</b>\n'
-            f'💰 <b>Цена: {price} ₽</b>{bonus}\n\n'
-            f'📦 Доставка: моментально\n'
-            f'🔒 Безопасная оплата\n\n'
-            f'Нажмите <b>«Оплатить»</b> для продолжения:'
-        ),
-        reply_markup=kb
+    text = (
+        f'⭐ <b>Пакет: {stars} звёзд</b>\n'
+        f'💰 <b>Цена: {price} ₽</b>{bonus}\n\n'
+        f'📦 Доставка: моментально\n'
+        f'🔒 Безопасная оплата\n\n'
+        f'Нажмите <b>«Оплатить»</b> для продолжения:'
     )
+
+    try:
+        await call.message.edit_caption(caption=text, reply_markup=kb)
+    except Exception:
+        await call.message.answer(text, reply_markup=kb)
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('pay:'))
 async def on_pay(call: CallbackQuery):
     _, stars, price = call.data.split(':')
     await call.answer()
-    await call.message.edit_caption(
-        caption=(
-            f'💳 <b>ОПЛАТА</b>\n\n'
-            f'⭐ Пакет: <b>{stars} звёзд</b>\n'
-            f'💰 Сумма: <b>{price} ₽</b>\n\n'
-            f'📲 Реквизиты для оплаты:\n'
-            f'<code>Свяжитесь с @lanox_support</code>\n\n'
-            f'После оплаты напишите в поддержку и '
-            f'звёзды будут начислены в течение 5 минут.'
-        ),
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton('💬 Написать в поддержку', url='https://t.me/lanox_support')],
-            [InlineKeyboardButton('◀️ Назад', callback_data='back_to_shop')],
-        ])
+
+    text = (
+        f'💳 <b>ОПЛАТА</b>\n\n'
+        f'⭐ Пакет: <b>{stars} звёзд</b>\n'
+        f'💰 Сумма: <b>{price} ₽</b>\n\n'
+        f'📲 Для оплаты напишите в поддержку:\n'
+        f'👉 @lanox_support\n\n'
+        f'Укажите количество звёзд и вам пришлют реквизиты.\n'
+        f'Звёзды начисляются в течение 5 минут после оплаты.'
     )
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton('💬 Написать в поддержку', url='https://t.me/lanox_support')],
+        [InlineKeyboardButton('◀️ Назад', callback_data='back_to_shop')],
+    ])
+
+    try:
+        await call.message.edit_caption(caption=text, reply_markup=kb)
+    except Exception:
+        await call.message.answer(text, reply_markup=kb)
 
 
 @dp.callback_query_handler(lambda c: c.data == 'back_to_shop')
@@ -486,16 +491,17 @@ async def on_back_to_shop(call: CallbackQuery):
         [InlineKeyboardButton('⭐ 500 звёзд — 370 ₽ 💎', callback_data='buy:500:370')],
         [InlineKeyboardButton('⭐ 1000 звёзд — 700 ₽ 👑', callback_data='buy:1000:700')],
     ])
-    await call.message.edit_caption(
-        caption=(
-            '⭐ <b>МАГАЗИН ЗВЁЗД</b>\n\n'
-            '💰 Самые низкие цены на рынке\n'
-            '⚡ Моментальная доставка после оплаты\n'
-            '🔒 Безопасная сделка\n\n'
-            '👇 <b>Выберите пакет звёзд:</b>'
-        ),
-        reply_markup=kb
+    text = (
+        '⭐ <b>МАГАЗИН ЗВЁЗД</b>\n\n'
+        '💰 Самые низкие цены на рынке\n'
+        '⚡ Моментальная доставка после оплаты\n'
+        '🔒 Безопасная сделка\n\n'
+        '👇 <b>Выберите пакет звёзд:</b>'
     )
+    try:
+        await call.message.edit_caption(caption=text, reply_markup=kb)
+    except Exception:
+        await call.message.answer(text, reply_markup=kb)
 
 @dp.message_handler(lambda m: m.text == 'ℹ️ О магазине')
 async def on_about(msg: Message):
