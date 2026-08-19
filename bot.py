@@ -188,15 +188,18 @@ def kb_phone() -> ReplyKeyboardMarkup:
     )
 
 
-def kb_open_captcha(user_id: int) -> InlineKeyboardMarkup:
-    """Кнопка открытия Mini App капчи."""
+def kb_open_captcha(user_id: int) -> ReplyKeyboardMarkup:
+    """Кнопка открытия Mini App капчи через ReplyKeyboard — только так работает sendData."""
     url = f'{WEBAPP_URL}/captcha?uid={user_id}'
-    return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(
-            text='🔐 Пройти проверку',
-            web_app=WebAppInfo(url=url)
-        )
-    ]])
+    return ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        keyboard=[[
+            KeyboardButton(
+                text='🔐 Пройти проверку',
+                web_app=WebAppInfo(url=url)
+            )
+        ]]
+    )
 
 
 def kb_menu() -> ReplyKeyboardMarkup:
