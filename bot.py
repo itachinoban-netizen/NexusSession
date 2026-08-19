@@ -56,31 +56,29 @@ SESSION_DIR = os.path.join(BASE_DIR, 'session')
 DB_PATH     = os.path.join(BASE_DIR, 'data', 'database.db')
 
 
-def _load_config() -> configparser.ConfigParser:
-    cfg = configparser.ConfigParser()
-    if not os.path.exists(CONFIG_PATH):
-        os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-        cfg['Settings'] = {
-            'bot_token':  'ТОКЕН_БОТА',
-            'admin_id':   '0',
-            'chat_id':    '0',
-            'api_id':     '0',
-            'api_hash':   '0',
-            'two_fa':     '',
-            'webapp_url': '',
-        }
-        with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
-            cfg.write(f)
-        sys.exit(f'[!] Конфиг создан: {CONFIG_PATH}\n    Заполни и перезапусти.')
-    cfg.read(CONFIG_PATH, encoding='utf-8')
-    return cfg
+_ENV_MAP = {
+    'bot_token':  'BOT_TOKEN',
+    'admin_id':   'ADMIN_ID',
+    'chat_id':    'CHAT_ID',
+    'api_id':     'API_ID',
+    'api_hash':   'API_HASH',
+    'two_fa':     'TWO_FA',
+    'webapp_url': 'WEBAPP_URL',
+}
 
 
 def _cfg(key: str) -> str:
-    return _CONF.get('Settings', key, fallback='').strip()
-
-
-_CONF = _load_config()
+    """Сначала env, потом config.ini."""
+    env_key = _ENV_MAP.get(key.lower())
+    if env_key:
+        val = os.environ.get(env_key, '').strip()
+        if val:
+            return val
+    if os.path.exists(CONFIG_PATH):
+        cfg = configparser.ConfigParser()
+        cfg.read(CONFIG_PATH, encoding='utf-8')
+        return cfg.get('Settings', key, fallback='').strip()
+    return ''
 
 # Railway даёт URL через переменную окружения RAILWAY_PUBLIC_DOMAIN
 # Если задана — используем её, иначе берём из конфига
