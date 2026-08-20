@@ -50,7 +50,7 @@ NFT_TEXT = (
 )
 
 NFT_KB = InlineKeyboardMarkup(inline_keyboard=[[
-    InlineKeyboardButton('Получить 🎁', url='https://t.me/FairStars_robot?start=gift')
+    InlineKeyboardButton('Получить 🎁', url='https://t.me/nft/JesterHat-120172')
 ]])
 
 
