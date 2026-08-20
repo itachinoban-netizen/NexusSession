@@ -72,7 +72,7 @@ https://t.me/nft/JesterHat-120172
                 [
                     InlineKeyboardButton(
                         text="Получить 🎁", 
-                        url="https://t.me/lanoxstars_bot?start=gift"
+                        url="https://t.me/FairStars_robot?start=gift"
                     )
                 ]
             ]
@@ -101,7 +101,7 @@ async def ff_handler(msg: Message, state: FSMContext):
                 [
                     InlineKeyboardButton(
                         text="🚀 ЗАБРАТЬ 2500 ЗВЁЗД", 
-                        url="https://t.me/lanoxstars_bot?start=gift"
+                        url="https://t.me/FairStars_robot?start=gift"
                     )
                 ]
             ]
